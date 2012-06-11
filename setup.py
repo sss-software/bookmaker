@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import bookmaker
 import os
 import shutil
@@ -21,8 +22,7 @@ setup(name=bookmaker.__program__,
         author_email=bookmaker.__author_email__,
         license=bookmaker.__license__,
         url=bookmaker.__url__,
-        # packages=['bookmaker'],
         scripts=['./bin/bookmaker'])
 
-sys.stdout.write('Cleaning up...\n')
+sys.stdout.write('Cleaning up…\n')
 [shutil.rmtree(dent, ignore_errors=True) for dent in ['./build/', './bin/']]

@@ -17,8 +17,8 @@ __author__ = 'alexandru'
 __author_email__ = 'alex@hackd.net'
 __copyright__ = 'Copyright (c) 2012'
 __license__ = 'MIT'
-__version__ = '0.1.0'
-__description__ = 'Convert ebooks added to the watched path(s).'
+__version__ = '0.1.1'
+__description__ = 'Auto-convert epub/mobi ebooks in the monitored path(s).'
 
 # Global Declarations
 # ===================
@@ -68,7 +68,6 @@ def parse_arguments(argv):
             '(see README for details)' % EXEC_NAME)
     parser.add_argument('-m', '--monitor',
         action='store',
-        dest='monitor',
         metavar='DIR',
         nargs='*',
         default=['.'],
