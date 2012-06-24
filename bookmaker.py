@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -17,7 +18,7 @@ __author__ = 'alexandru'
 __author_email__ = 'alex@hackd.net'
 __copyright__ = 'Copyright (c) 2012'
 __license__ = 'MIT'
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __description__ = 'Auto-convert epub/mobi ebooks in the monitored path(s).'
 
 # Global Declarations
@@ -37,9 +38,10 @@ worq = Queue.Queue()
 class LibrarianDropBoxHandler(FileSystemEventHandler):
     """Handle modified-file events and kickstart conversion."""
 
-    def __init__(self, formats):
+    def __init__(self, formats, organize=True):
         super(LibrarianDropBoxHandler, self).__init__()
         self.formats = formats
+        self.organize = organize
 
     def on_modified(self, event):
         super(LibrarianDropBoxHandler, self).on_modified(event)
@@ -48,7 +50,18 @@ class LibrarianDropBoxHandler(FileSystemEventHandler):
             (parent, phile) = os.path.split(event.src_path)
             (name, sep_ext) = os.path.splitext(phile)
             ext = sep_ext.strip(os.path.extsep)
-            if ext in IN_FORMATS:
+
+            # if we keep things organized, and the parent isn't named the same
+            # as the current file, we'll create such a parent and move the
+            # file in it; it will be picked up by the next FS event
+            if self.organize and not os.path.split(parent)[1] == name:
+                org_dir = os.path.join(parent, name)
+                if not os.path.exists(org_dir):
+                    os.mkdir(org_dir)
+                    shutil.move(event.src_path, org_dir)
+            # either we don't keep organized (tsk) or we've already created
+            # the containing folder, so we're triggering the conversion now
+            elif ext in IN_FORMATS:
                 for fmt in OUT_FORMATS:
                     try_fmt = ''.join([name, os.path.extsep, fmt])
                     dest_path = os.path.join(parent, try_fmt)
@@ -61,14 +74,14 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument('-p', '--paths',
         action='store',
-        metavar='PATH',
+        metavar='EXEC_PATH',
         nargs='*',
         default=[],
         help='additional path(s) to search for the conversion utility `%s` '
             '(see README for details)' % EXEC_NAME)
     parser.add_argument('-m', '--monitor',
         action='store',
-        metavar='DIR',
+        metavar='PATH',
         nargs='*',
         default=['.'],
         help='path(s) to monitor (default: current directory)')
@@ -85,6 +98,10 @@ def parse_arguments(argv):
         type=int,
         default=NUM_WORKERS,
         help='number of conversion workers (default: %d)' % NUM_WORKERS)
+    parser.add_argument('--no-org-folder',
+        action='store_false',
+        dest='org',
+        help='do NOT create a folder for each book (with the output formats)')
 
     return parser.parse_args(args=argv)
 
@@ -116,7 +133,7 @@ def main(argv):
         sys.stderr.write('$PATH:\n')
         for binpath in binpaths:
             sys.stderr.write('\t%s\n' % binpath)
-        sys.stderr.write('Please see the README for details.\n')
+        sys.stderr.write('Please see the README for more details.\n')
         sys.exit(1)
 
     # spin up some workers
@@ -132,7 +149,7 @@ def main(argv):
             sys.stderr.write('Invalid path: %s\n' % monitor_path)
             sys.exit(2)
         else:
-            event_handler = LibrarianDropBoxHandler(set(ns.formats))
+            event_handler = LibrarianDropBoxHandler(set(ns.formats), ns.org)
             observer.schedule(event_handler, monitor_path, recursive=True)
     observer.start()
 
