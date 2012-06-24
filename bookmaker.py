@@ -18,7 +18,7 @@ __author__ = 'alexandru'
 __author_email__ = 'alex@hackd.net'
 __copyright__ = 'Copyright (c) 2012'
 __license__ = 'MIT'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __description__ = 'Auto-convert epub/mobi ebooks in the monitored path(s).'
 
 # Global Declarations
@@ -41,11 +41,11 @@ class LibrarianDropBoxHandler(FileSystemEventHandler):
     def __init__(self, formats, organize=True):
         super(LibrarianDropBoxHandler, self).__init__()
         self.formats = formats
-        self.organize = organize
 
     def on_modified(self, event):
         super(LibrarianDropBoxHandler, self).on_modified(event)
         if not event.is_directory:
+            file_src = event.src_path
             # add a task for each of the formats still requiring conversion
             (parent, phile) = os.path.split(event.src_path)
             (name, sep_ext) = os.path.splitext(phile)
@@ -53,20 +53,24 @@ class LibrarianDropBoxHandler(FileSystemEventHandler):
 
             # if we keep things organized, and the parent isn't named the same
             # as the current file, we'll create such a parent and move the
-            # file in it; it will be picked up by the next FS event
-            if self.organize and not os.path.split(parent)[1] == name:
-                org_dir = os.path.join(parent, name)
-                if not os.path.exists(org_dir):
-                    os.mkdir(org_dir)
-                    shutil.move(event.src_path, org_dir)
+            # file in it
+            if not os.path.split(parent)[1] == name:
+                dest_dir = os.path.join(parent, name)
+            else:
+                dest_dir = parent
+            if not os.path.exists(dest_dir):
+                os.mkdir(dest_dir)
+                shutil.move(file_src, dest_dir)
+                file_src = os.path.join(dest_dir, phile)
+
             # either we don't keep organized (tsk) or we've already created
             # the containing folder, so we're triggering the conversion now
-            elif ext in IN_FORMATS:
+            if ext in IN_FORMATS:
                 for fmt in OUT_FORMATS:
                     try_fmt = ''.join([name, os.path.extsep, fmt])
-                    dest_path = os.path.join(parent, try_fmt)
+                    dest_path = os.path.join(dest_dir, try_fmt)
                     if not os.path.exists(dest_path):
-                        worq.put((event.src_path, dest_path))
+                        worq.put((file_src, dest_path))
 
 
 def parse_arguments(argv):
@@ -98,10 +102,6 @@ def parse_arguments(argv):
         type=int,
         default=NUM_WORKERS,
         help='number of conversion workers (default: %d)' % NUM_WORKERS)
-    parser.add_argument('--no-org-folder',
-        action='store_false',
-        dest='org',
-        help='do NOT create a folder for each book (with the output formats)')
 
     return parser.parse_args(args=argv)
 
@@ -149,7 +149,7 @@ def main(argv):
             sys.stderr.write('Invalid path: %s\n' % monitor_path)
             sys.exit(2)
         else:
-            event_handler = LibrarianDropBoxHandler(set(ns.formats), ns.org)
+            event_handler = LibrarianDropBoxHandler(set(ns.formats))
             observer.schedule(event_handler, monitor_path, recursive=True)
     observer.start()
 
