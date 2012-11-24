@@ -12,7 +12,12 @@ The `ebook-convert` utility (provided by [calibre]) must be available in the
 `$PATH` of the user, or specified with the relevant option at runtime.
 
 This program is meant to run continuously, which is probably best accomplished
-by way of [supervisord].
+by way of [supervisord]. The basic configuration file is sufficient, with the
+addition of the `[program:bookmaker]` section which simply points to the
+executable (with any flags that may be required). Note that, if you install
+everything via `pip` and `virtualenv` (including **bookmaker** itself), then the
+`bookmaker` executable should alredy have the appropriate script path; in that
+case, only the path to monitor is needed.
 
 
 
@@ -20,7 +25,8 @@ REQUIREMENTS
 ------------
 
 * Python 2.7
-* [calibre]
+* [calibre], recommended install via the upstream provided script, at least on
+  Linux
 * packages from `requirements.txt`, to be installed via [pip]
 
 

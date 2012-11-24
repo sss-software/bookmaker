@@ -76,6 +76,11 @@ class LibrarianDropBoxHandler(FileSystemEventHandler):
 def parse_arguments(argv):
     # setup and parse arguments
     parser = argparse.ArgumentParser(description=__description__)
+    parser.add_argument('monitor',
+        action='store',
+        metavar='PATH',
+        nargs='*',
+        help='path(s) to monitor')
     parser.add_argument('-p', '--paths',
         action='store',
         metavar='EXEC_PATH',
@@ -83,12 +88,6 @@ def parse_arguments(argv):
         default=[],
         help='additional path(s) to search for the conversion utility `%s` '
             '(see README for details)' % EXEC_NAME)
-    parser.add_argument('-m', '--monitor',
-        action='store',
-        metavar='PATH',
-        nargs='*',
-        default=['.'],
-        help='path(s) to monitor (default: current directory)')
     parser.add_argument('-f', '--format',
         action='store',
         dest='formats',
