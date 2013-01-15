@@ -18,7 +18,7 @@ __author__ = 'alexandru'
 __author_email__ = 'alex@hackd.net'
 __copyright__ = 'Copyright (c) 2012'
 __license__ = 'MIT'
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 __description__ = 'Auto-convert epub/mobi ebooks in the monitored path(s).'
 
 # Global Declarations
@@ -27,7 +27,7 @@ __description__ = 'Auto-convert epub/mobi ebooks in the monitored path(s).'
 # name of the conversion executable
 EXEC_NAME = 'ebook-convert'
 # known formats for conversion
-OUT_FORMATS = set(['epub', 'mobi'])
+OUT_FORMATS = set(['epub', 'mobi', 'pdf'])
 IN_FORMATS = OUT_FORMATS.union(['lit'])
 # number of workers to use for conversion
 NUM_WORKERS = 2
@@ -96,6 +96,14 @@ def parse_arguments(argv):
         choices=OUT_FORMATS,
         default=OUT_FORMATS,
         help='format(s) to convert to (known: %s)' % ", ".join(OUT_FORMATS))
+    parser.add_argument('-e', '--exclude',
+        action='store',
+        dest='exc_formats',
+        metavar='EX_FMT',
+        nargs='*',
+        choices=OUT_FORMATS,
+        default=None,
+        help='destination format(s) to exclude from conversion')
     parser.add_argument('-w', '--workers',
         action='store',
         type=int,
@@ -148,7 +156,8 @@ def main(argv):
             sys.stderr.write('Invalid path: %s\n' % monitor_path)
             sys.exit(2)
         else:
-            event_handler = LibrarianDropBoxHandler(set(ns.formats))
+            target_formats = set(ns.formats).difference(ns.exc_formats)
+            event_handler = LibrarianDropBoxHandler(target_formats)
             observer.schedule(event_handler, monitor_path, recursive=True)
     observer.start()
 

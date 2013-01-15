@@ -27,6 +27,7 @@ REQUIREMENTS
 * Python 2.7
 * [calibre], recommended install via the upstream provided script, at least on
   Linux
+* Xvfb, needed if you want to be able to convert to PDF
 * packages from `requirements.txt`, to be installed via [pip]
 
 
